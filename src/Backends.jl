@@ -49,10 +49,28 @@ function available_backends()
 end
 
 function default_backend()
-    # Return first GPU backend if not, CPU backend
-    if length(available_backends()) > 1
-        return available_backends()[2]
+
+    backend_var = get(ENV, "KA_BACKEND", "default")
+
+    default_backend = if length(available_backends()) > 1
+        available_backends()[2]
     else
-        return available_backends()[1]
+        available_backends()[1]
     end
+    
+    if backend_var == "CPU"
+        return get_backend_impl(CPUImpl())
+    elseif backend_var == "CUDA"
+        return get_backend_impl(CUDAImpl())
+    elseif backend_var == "ROCM"
+        return get_backend_impl(AMDGPUImpl())
+    elseif backend_var == "ONEAPI"
+        return get_backend_impl(oneAPIImpl())
+    elseif backend_var == "METAL"
+        return get_backend_impl(MetalImpl())
+    elseif backend_var != "default"
+        @error "Unknown backend: " * backend_var * ", using default"
+    end
+
+    return default_backend
 end
